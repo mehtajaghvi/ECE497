@@ -39,6 +39,9 @@ int main(int argc, char** argv){
 	int pattern =0;
 	int value =0;
 
+	int freq = 10;
+	int duty = 25;
+
 	// I2C Variables
 	char *end;
 	int res, i2cbus, address, size, file;
@@ -102,6 +105,8 @@ int main(int argc, char** argv){
 	set_gpio_value(gpio2, gpio2_value);
 	gpio2_fd = gpio_fd_open(gpio2);
 
+	set_mux_value("gpmc_a2",6);
+
 
 	while(loop){
 		memset((void*)fdset, 0, sizeof(fdset));
@@ -135,7 +140,9 @@ int main(int argc, char** argv){
 
 			// blink led
 			case 0:
-				printf("Case 0");
+				printf("Case 0\n");
+				value = read_ain("ain6");
+				printf("Voltage: %d\n",value);
 				if(gpio2_value){
 					gpio2_value = 0;
 				}
@@ -147,20 +154,22 @@ int main(int argc, char** argv){
 
 			//PWM output
 			case 1:
-				printf("Case 1");
-				set_mux_value("gpmc_a2",6);
-				set_pwm("ehrpwm.1:0",10,25);
+				printf("Case 1\n");
+				freq = read_ain("ain6")/50;
+				printf("Frequency: %d\n",freq);
+				set_pwm("ehrpwm.1:0",freq,duty);
 				break;
 
 			case 2:
-				printf("Case 2");
-				unset_pwm("ehrpwm.1:0");
-				value = read_ain("ain6");
-				printf("Voltage: %d\n",value);
+				printf("Case 2\n");
+				duty = read_ain("ain6")/50;
+				printf("Duty cycle: %d\n",duty);
+				set_pwm("ehrpwm.1:0",freq,duty);
+//				unset_pwm("ehrpwm.1:0");
 				break;
 
 			case 3:
-				printf("Case 3");
+				printf("Case 3\n");
 				res = i2c_smbus_write_byte(file, daddress);
 				if (res < 0) {
 					fprintf(stderr, "Warning - write failed, filename=%s, daddress=%d\n",
