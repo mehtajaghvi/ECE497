@@ -143,6 +143,7 @@ int main(int argc, char** argv){
 				printf("Case 0\n");
 				value = read_ain("ain6");
 				printf("Voltage: %d\n",value);
+				set_pwm("ehrpwm.1:0",10,25);
 				if(gpio2_value){
 					gpio2_value = 0;
 				}
@@ -182,7 +183,7 @@ int main(int argc, char** argv){
 					exit(2);
 				}
 
-				printf("0x%02x (%d)\n", res, res);
+				printf("Temp: 0x%02x (%d)\n", res, res);
 				break;
 
 			default:
