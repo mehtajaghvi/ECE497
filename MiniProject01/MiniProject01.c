@@ -135,6 +135,7 @@ int main(int argc, char** argv){
 
 			// blink led
 			case 0:
+				printf("Case 0");
 				if(gpio2_value){
 					gpio2_value = 0;
 				}
@@ -145,16 +146,21 @@ int main(int argc, char** argv){
 				break;
 
 			//PWM output
-			case 1: set_mux_value("gpmc_a2",6);
+			case 1:
+				printf("Case 1");
+				set_mux_value("gpmc_a2",6);
 				set_pwm("ehrpwm.1:0",10,25);
 				break;
 
-			case 2: unset_pwm("ehrpwm.1:0");
+			case 2:
+				printf("Case 2");
+				unset_pwm("ehrpwm.1:0");
 				value = read_ain("ain6");
 				printf("Voltage: %d\n",value);
 				break;
 
 			case 3:
+				printf("Case 3");
 				res = i2c_smbus_write_byte(file, daddress);
 				if (res < 0) {
 					fprintf(stderr, "Warning - write failed, filename=%s, daddress=%d\n",
