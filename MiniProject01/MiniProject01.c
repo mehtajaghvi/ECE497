@@ -161,7 +161,6 @@ int main(int argc, char** argv){
 						filename, daddress);
 				}
 				res = i2c_smbus_read_byte_data(file, daddress);
-				close(file);
 
 				if (res < 0) {
 					fprintf(stderr, "Error: Read failed, res=%d\n", res);
@@ -175,6 +174,7 @@ int main(int argc, char** argv){
 				break;
 			}
 		}
+	close(file);
 	gpio_fd_close(gpio1_fd);
 	gpio_fd_close(gpio2_fd);
 	unexport_gpio(gpio1);
