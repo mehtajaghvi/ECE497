@@ -67,6 +67,7 @@ int GYRO_ZOUT_OFFSET;
 //This function is used to initialize the gyroscope. The function returns the -errno if an error accrues.
 int initialize(int i2cbus, int address){
 
+	char filename[20];
 	sprintf(filename, "/dev/i2c-%d", i2cbus);
 	file = open(filename, O_RDWR);
 	if (file<0) {

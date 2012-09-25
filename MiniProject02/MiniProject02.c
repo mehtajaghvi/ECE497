@@ -47,7 +47,6 @@ int main(int argc, char** argv){
 	char *end;
 	int res, i2cbus, address, size, file;
 	int daddress;
-	char filename[20];
 
 	//check that at least two arguments are passed in
 	if(argc < 4){
