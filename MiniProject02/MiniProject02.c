@@ -132,10 +132,11 @@ int main(int argc, char** argv){
 
 			//PWM output
 			case 1:
+				printf("Case 1\n");
 
 				gyroID = readWhoAmI(file);
 
-				printf("gyroID: 0x%02x (%d)\n", gyroID, gyroID);
+				printf("gyroID: %6d\n", gyroID);
 				break;
 
 			//Read Gyro Temperature
@@ -144,7 +145,7 @@ int main(int argc, char** argv){
 
 				gyroTemp = readTemp(file);
 
-				printf("gyroTemp: 0x%02x (%d)\n", gyroTemp, gyroTemp);
+				printf("gyroTemp: %6d\n", gyroTemp);
 				break;
 
 			//Read Gyro XYZ
