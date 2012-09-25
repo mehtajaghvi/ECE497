@@ -5,9 +5,6 @@
  *      Author: Ruffin White
  */
 
-#ifndef ITG3200_H
-#define ITG3200_H
-
 /**
  * Includes
  */
