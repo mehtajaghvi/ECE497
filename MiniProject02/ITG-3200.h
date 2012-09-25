@@ -42,9 +42,9 @@
 int readX(int file)
 {
   int data=0;
-  i2c_smbus_write_byte(file, GYRO_XOUT_H_REG);
+//  i2c_smbus_write_byte(file, GYRO_XOUT_H_REG);
   data = i2c_smbus_read_byte_data(file, GYRO_XOUT_H_REG)<<8;
-  i2c_smbus_write_byte(file, GYRO_XOUT_L_REG);
+//  i2c_smbus_write_byte(file, GYRO_XOUT_L_REG);
   data |= i2c_smbus_read_byte_data(file, GYRO_XOUT_L_REG);
 
   return data;

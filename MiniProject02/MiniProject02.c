@@ -173,20 +173,10 @@ int main(int argc, char** argv){
 			//Read Gyro
 			case 3:
 				printf("Case 3\n");
-//				res = i2c_smbus_write_byte(file, daddress);
-//				if (res < 0) {
-//					fprintf(stderr, "Warning - write failed, filename=%s, daddress=%d\n",
-//						filename, daddress);
-//				}
 
 				gyroX = readX(file);
 				gyroY = readY(file);
 				gyroZ = readZ(file);
-
-//				if (res < 0) {
-//					fprintf(stderr, "Error: Read failed, res=%d\n", res);
-//					exit(2);
-//				}
 
 				printf("gyroX: 0x%02x (%d)\n", gyroX, gyroX);
 				printf("gyroY: 0x%02x (%d)\n", gyroY, gyroY);
