@@ -5,6 +5,21 @@
  *      Author: Ruffin White
  */
 
+#ifndef ITG3200_H
+#define ITG3200_H
+
+/**
+ * Includes
+ */
+#include <errno.h>
+#include "i2c-dev.h"
+
+
+/**
+ * Defines
+ */
+#define ITG3200_I2C_ADDRESS 0x69 //7-bit address
+
 //-----------
 // Registers
 //-----------
@@ -34,7 +49,57 @@
 #define LPFBW_10HZ  0x05
 #define LPFBW_5HZ   0x06
 
-//Read Functions
+//-----------
+// Offsets
+//-----------
+int TEMP_OUT_OFFSET;
+int GYRO_XOUT_OFFSET;
+int GYRO_YOUT_OFFSET;
+int GYRO_ZOUT_OFFSET;
+
+
+
+
+//----------------
+// Read Functions
+//----------------
+
+//This function is used to initialize the gyroscope. The function returns the -errno if an error accrues.
+int initialize(int i2cbus, int address){
+
+	sprintf(filename, "/dev/i2c-%d", i2cbus);
+	file = open(filename, O_RDWR);
+	if (file<0) {
+		return -errno;
+	}
+
+	if (ioctl(file, I2C_SLAVE, address) < 0) {
+			return -errno;
+	}
+
+}
+
+//This function is used to read the WHO_AM_I_REG of the gyroscope.
+//Usage: int gyroID = readWhoAmI();
+int readWhoAmI(int file)
+{
+  int data=0;
+  data = i2c_smbus_read_byte_data(file, WHO_AM_I_REG);
+
+  return data;
+}
+
+
+//This function is used to read the temperature of the gyroscope.
+//Usage: int gyroTemp = readTemp();
+int readTemp(int file)
+{
+  int data=0;
+  data = i2c_smbus_read_byte_data(file, TEMP_OUT_H_REG)<<8;
+  data |= i2c_smbus_read_byte_data(file, TEMP_OUT_L_REG);
+
+  return data;
+}
 
 //This function is used to read the X-Axis rate of the gyroscope. The function returns the ADC value from the Gyroscope
 //NOTE: This value is NOT in degrees per second.
@@ -42,9 +107,7 @@
 int readX(int file)
 {
   int data=0;
-//  i2c_smbus_write_byte(file, GYRO_XOUT_H_REG);
   data = i2c_smbus_read_byte_data(file, GYRO_XOUT_H_REG)<<8;
-//  i2c_smbus_write_byte(file, GYRO_XOUT_L_REG);
   data |= i2c_smbus_read_byte_data(file, GYRO_XOUT_L_REG);
 
   return data;

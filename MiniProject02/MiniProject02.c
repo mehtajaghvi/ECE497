@@ -9,12 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
-#include "i2c-dev.h"
 #include "ITG-3200.h"
 
 int loop=1;
@@ -43,7 +41,7 @@ int main(int argc, char** argv){
 	int freq = 10;
 	int duty = 25;
 
-	int gyroX, gyroY, gyroZ;
+	int gyroX, gyroY, gyroZ, gyroTemp;
 
 	// I2C Variables
 	char *end;
@@ -52,8 +50,8 @@ int main(int argc, char** argv){
 	char filename[20];
 
 	//check that at least two arguments are passed in
-	if(argc < 5){
-		printf("Usage: %s <input-gpio> <output-gpio> <i2c-bus> <i2c-address>\n", argv[0]);
+	if(argc < 4){
+		printf("Usage: %s <input-gpio> <output-gpio> <i2c-bus>\n", argv[0]);
 		printf("polls input-gpio, and writes value to output-gpio\n");
 		fflush(stdout);
 		return 1;
@@ -68,32 +66,13 @@ int main(int argc, char** argv){
 	gpio1 = atoi(argv[1]);
 	gpio2 = atoi(argv[2]);
 
+
 	//assign I2C values
 	i2cbus   = atoi(argv[3]);
-	address  = atoi(argv[4]);
-	size = I2C_SMBUS_BYTE;
+	address  = ITG3200_I2C_ADDRESS;
+	initialize(i2cbus, address);
 
-	sprintf(filename, "/dev/i2c-%d", i2cbus);
-	file = open(filename, O_RDWR);
-	if (file<0) {
-		if (errno == ENOENT) {
-			fprintf(stderr, "Error: Could not open file "
-				"/dev/i2c-%d: %s\n", i2cbus, strerror(ENOENT));
-		} else {
-			fprintf(stderr, "Error: Could not open file "
-				"`%s': %s\n", filename, strerror(errno));
-			if (errno == EACCES)
-				fprintf(stderr, "Run as root?\n");
-		}
-		exit(1);
-	}
 
-	if (ioctl(file, I2C_SLAVE, address) < 0) {
-			fprintf(stderr,
-				"Error: Could not set address to 0x%02x: %s\n",
-				address, strerror(errno));
-			return -errno;
-	}
 
 	//argument 1 will be input
 	export_gpio(gpio1);
@@ -115,9 +94,6 @@ int main(int argc, char** argv){
 
 		fdset[0].fd = gpio1_fd;
 		fdset[0].events = POLLPRI;
-
-		//fdset[1].fd = gpio2_fd;
-		//fdset[1].events = POLLPRI;
 
 		rc = poll(fdset, nfds, timeout);
 
@@ -157,20 +133,22 @@ int main(int argc, char** argv){
 
 			//PWM output
 			case 1:
-				printf("Case 1\n");
-				freq = read_ain("ain6")/50;
-				printf("Frequency: %d\n",freq);
-				set_pwm("ehrpwm.1:0",freq,duty);
+
+				gyroID = readWhoAmI(file);
+
+				printf("gyroID: 0x%02x (%d)\n", gyroID, gyroID);
 				break;
 
+			//Read Gyro Temperature
 			case 2:
 				printf("Case 2\n");
-				duty = read_ain("ain6")/50;
-				printf("Duty cycle: %d\n",duty);
-				set_pwm("ehrpwm.1:0",freq,duty);
-//				unset_pwm("ehrpwm.1:0");
+
+				gyroTemp = readTemp(file);
+
+				printf("gyroTemp: 0x%02x (%d)\n", gyroTemp, gyroTemp);
 				break;
-			//Read Gyro
+
+			//Read Gyro XYZ
 			case 3:
 				printf("Case 3\n");
 
