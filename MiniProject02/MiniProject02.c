@@ -70,7 +70,7 @@ int main(int argc, char** argv){
 	i2cbus   = atoi(argv[3]);
 	address  = ITG3200_I2C_ADDRESS;
 	file = initialize(i2cbus, address);
-
+	zeroGyro(file);
 
 
 	//argument 1 will be input

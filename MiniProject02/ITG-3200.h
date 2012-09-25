@@ -49,10 +49,10 @@
 //-----------
 // Offsets
 //-----------
-int TEMP_OUT_OFFSET;
-int GYRO_XOUT_OFFSET;
-int GYRO_YOUT_OFFSET;
-int GYRO_ZOUT_OFFSET;
+short int TEMP_OUT_OFFSET = 0;
+short int GYRO_XOUT_OFFSET = 0;
+short int GYRO_YOUT_OFFSET = 0;
+short int GYRO_ZOUT_OFFSET = 0;
 
 
 
@@ -76,6 +76,15 @@ int initialize(int i2cbus, int address){
 			return -errno;
 	}
 	return file;
+
+}
+
+//This function is used to initialize the gyroscope. The function returns the -errno if an error accrues.
+int zeroGyro(int file){
+
+	GYRO_XOUT_OFFSET = readX(file);
+	GYRO_YOUT_OFFSET = readY(file);
+	GYRO_ZOUT_OFFSET = readZ(file);
 
 }
 
@@ -110,7 +119,7 @@ int readX(int file)
   data = i2c_smbus_read_byte_data(file, GYRO_XOUT_H_REG)<<8;
   data |= i2c_smbus_read_byte_data(file, GYRO_XOUT_L_REG);
 
-  return data;
+  return data - GYRO_XOUT_OFFSET;
 }
 
 //This function is used to read the Y-Axis rate of the gyroscope. The function returns the ADC value from the Gyroscope
@@ -122,7 +131,7 @@ int readY(int file)
   data = i2c_smbus_read_byte_data(file, GYRO_YOUT_H_REG)<<8;
   data |= i2c_smbus_read_byte_data(file, GYRO_YOUT_L_REG);
 
-  return data;
+  return data - GYRO_YOUT_OFFSET;
 }
 
 //This function is used to read the Z-Axis rate of the gyroscope. The function returns the ADC value from the Gyroscope
@@ -134,5 +143,5 @@ int readZ(int file)
   data = i2c_smbus_read_byte_data(file, GYRO_ZOUT_H_REG)<<8;
   data |= i2c_smbus_read_byte_data(file, GYRO_ZOUT_L_REG);
 
-  return data;
+  return data - GYRO_ZOUT_OFFSET;
 }
