@@ -41,7 +41,7 @@ int main(int argc, char** argv){
 	int freq = 10;
 	int duty = 25;
 
-	int gyroX, gyroY, gyroZ, gyroTemp;
+	int gyroID, gyroTemp, gyroX, gyroY, gyroZ;
 
 	// I2C Variables
 	char *end;
