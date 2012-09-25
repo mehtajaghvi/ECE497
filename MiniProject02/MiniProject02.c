@@ -41,7 +41,7 @@ int main(int argc, char** argv){
 	int freq = 10;
 	int duty = 25;
 
-	int gyroID, gyroTemp, gyroX, gyroY, gyroZ;
+	short int gyroID, gyroTemp, gyroX, gyroY, gyroZ;
 
 	// I2C Variables
 	char *end;
@@ -155,9 +155,9 @@ int main(int argc, char** argv){
 				gyroY = readY(file);
 				gyroZ = readZ(file);
 
-				printf("gyroX: 0x%02x (%d)\n", gyroX, (short int) gyroX);
-				printf("gyroY: 0x%02x (%d)\n", gyroY, (short int) gyroY);
-				printf("gyroZ: 0x%02x (%d)\n", gyroZ, (short int) gyroZ);
+				printf("gyroX: %5d\n", gyroX);
+				printf("gyroY: %5d\n", gyroY);
+				printf("gyroZ: %5d\n", gyroZ);
 				break;
 
 			default:
