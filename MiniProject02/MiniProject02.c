@@ -29,7 +29,7 @@ int main(int argc, char** argv){
 	//variable declarations
 	struct pollfd fdset[1];
 	int nfds = 1;
-	int timeout = 1000;
+	int timeout = 100;
 	int rc;
 	char* buf[MAX_BUF];
 	int gpio1, gpio2;
