@@ -1,7 +1,7 @@
 /*
  * MiniProject02.c
  *
- *  Created on: Sep 17, 2012
+ *  Created on: Sep 20, 2012
  *      Author: Ruffin White
  */
 
@@ -15,6 +15,7 @@
 #include <poll.h>
 #include <signal.h>
 #include "i2c-dev.h"
+#include "ITG-3200.h"
 
 int loop=1;
 
@@ -30,7 +31,7 @@ int main(int argc, char** argv){
 	//variable declarations
 	struct pollfd fdset[1];
 	int nfds = 1;
-	int timeout = 3000;
+	int timeout = 1000;
 	int rc;
 	char* buf[MAX_BUF];
 	int gpio1, gpio2;
@@ -42,6 +43,8 @@ int main(int argc, char** argv){
 	int freq = 10;
 	int duty = 25;
 
+	int gyroX, gyroY, gyroZ;
+
 	// I2C Variables
 	char *end;
 	int res, i2cbus, address, size, file;
@@ -49,8 +52,8 @@ int main(int argc, char** argv){
 	char filename[20];
 
 	//check that at least two arguments are passed in
-	if(argc < 6){
-		printf("Usage: %s <input-gpio> <output-gpio> <i2c-bus> <i2c-address> <register>\n", argv[0]);
+	if(argc < 5){
+		printf("Usage: %s <input-gpio> <output-gpio> <i2c-bus> <i2c-address>\n", argv[0]);
 		printf("polls input-gpio, and writes value to output-gpio\n");
 		fflush(stdout);
 		return 1;
@@ -68,7 +71,6 @@ int main(int argc, char** argv){
 	//assign I2C values
 	i2cbus   = atoi(argv[3]);
 	address  = atoi(argv[4]);
-	daddress = atoi(argv[5]);
 	size = I2C_SMBUS_BYTE;
 
 	sprintf(filename, "/dev/i2c-%d", i2cbus);
@@ -168,22 +170,27 @@ int main(int argc, char** argv){
 				set_pwm("ehrpwm.1:0",freq,duty);
 //				unset_pwm("ehrpwm.1:0");
 				break;
-
+			//Read Gyro
 			case 3:
 				printf("Case 3\n");
-				res = i2c_smbus_write_byte(file, daddress);
-				if (res < 0) {
-					fprintf(stderr, "Warning - write failed, filename=%s, daddress=%d\n",
-						filename, daddress);
-				}
-				res = i2c_smbus_read_byte_data(file, daddress);
+//				res = i2c_smbus_write_byte(file, daddress);
+//				if (res < 0) {
+//					fprintf(stderr, "Warning - write failed, filename=%s, daddress=%d\n",
+//						filename, daddress);
+//				}
 
-				if (res < 0) {
-					fprintf(stderr, "Error: Read failed, res=%d\n", res);
-					exit(2);
-				}
+				gyroX = readX(file);
+				gyroY = readY(file);
+				gyroZ = readZ(file);
 
-				printf("Temp: 0x%02x (%d)\n", res, res);
+//				if (res < 0) {
+//					fprintf(stderr, "Error: Read failed, res=%d\n", res);
+//					exit(2);
+//				}
+
+				printf("gyroX: 0x%02x (%d)\n", gyroX, gyroX);
+				printf("gyroY: 0x%02x (%d)\n", gyroY, gyroY);
+				printf("gyroZ: 0x%02x (%d)\n", gyroZ, gyroZ);
 				break;
 
 			default:
