@@ -155,9 +155,9 @@ int main(int argc, char** argv){
 				gyroY = readY(file);
 				gyroZ = readZ(file);
 
-				printf("gyroX: 0x%02x (%d)\n", gyroX, gyroX);
-				printf("gyroY: 0x%02x (%d)\n", gyroY, gyroY);
-				printf("gyroZ: 0x%02x (%d)\n", gyroZ, gyroZ);
+				printf("gyroX: 0x%02x (%d)\n", gyroX, (short int) gyroX);
+				printf("gyroY: 0x%02x (%d)\n", gyroY, (short int) gyroY);
+				printf("gyroZ: 0x%02x (%d)\n", gyroZ, (short int) gyroZ);
 				break;
 
 			default:
