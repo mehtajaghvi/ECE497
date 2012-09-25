@@ -68,6 +68,7 @@ int GYRO_ZOUT_OFFSET;
 int initialize(int i2cbus, int address){
 
 	char filename[20];
+	int file;
 	sprintf(filename, "/dev/i2c-%d", i2cbus);
 	file = open(filename, O_RDWR);
 	if (file<0) {
@@ -77,6 +78,7 @@ int initialize(int i2cbus, int address){
 	if (ioctl(file, I2C_SLAVE, address) < 0) {
 			return -errno;
 	}
+	return file;
 
 }
 

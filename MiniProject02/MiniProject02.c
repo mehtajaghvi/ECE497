@@ -69,7 +69,7 @@ int main(int argc, char** argv){
 	//assign I2C values
 	i2cbus   = atoi(argv[3]);
 	address  = ITG3200_I2C_ADDRESS;
-	initialize(i2cbus, address);
+	file = initialize(i2cbus, address);
 
 
 
