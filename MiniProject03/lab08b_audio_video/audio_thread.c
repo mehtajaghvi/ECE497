@@ -80,24 +80,11 @@ void *audio_thread_fxn( void *envByRef )
     snd_pcm_uframes_t exact_bufsize;		// bufsize is in frames.  Each frame is 4 bytes
 
     int   blksize = BLOCKSIZE;			// Raw input or output frame size in bytes
-//    char *inputBuffer = NULL;
-    char *outputBuffer = NULL;			// Output buffer for driver to read from
-
+    char *outputBuffer = NULL;
+    char *outputBuffer2 = NULL;			// Output buffer for driver to read from
+	char *playingBuffer = NULL;
 // Thread Create Phase -- secure and initialize resources
 // ******************************************************
-
-    /*// Open input file
-    // ************************
-	
-    inputFile = fopen( INPUTFILE, "r" );
-
-    if( inputFile == NULL )
-    {
-        ERR( "Failed to open file %s\n", INPUTFILE );
-        status = AUDIO_THREAD_FAILURE;
-        goto  cleanup ;
-    }
-    DBG( "Opened %s.\n", INPUTFILE);*/
 
     // Setup audio input device
     // ************************
@@ -116,21 +103,13 @@ void *audio_thread_fxn( void *envByRef )
     // Record that input OSS device was opened in initialization bitmask
     initMask |= INPUT_ALSA_INITIALIZED;
 
-    //blksize = exact_bufsize*BYTESPERFRAME;
-
-    /* Create input buffer to read into from OSS input device
-    if( ( inputBuffer = malloc( blksize ) ) == NULL )
-    {
-        ERR( "Failed to allocate memory for input block (%d)\n", blksize );
-        status = AUDIO_THREAD_FAILURE;
-        goto  cleanup ;
-    }*/
+    blksize = exact_bufsize*BYTESPERFRAME;
 
     // Initialize audio output device
     // ******************************
     // Initialize the output ALSA device
     DBG( "pcm_output_handle before audio_output_setup = %d\n", (int) pcm_output_handle);
-    //exact_bufsize = blksize/BYTESPERFRAME;
+    exact_bufsize = blksize/BYTESPERFRAME;
     DBG( "Requesting bufsize = %d\n", (int) exact_bufsize);
     if( audio_io_setup( &pcm_output_handle, OUT_SOUND_DEVICE, SAMPLE_RATE, 
 			SND_PCM_STREAM_PLAYBACK, &exact_bufsize) == AUDIO_FAILURE )
@@ -139,15 +118,29 @@ void *audio_thread_fxn( void *envByRef )
         status = AUDIO_THREAD_FAILURE;
         goto  cleanup ;
     }
+	blksize = exact_bufsize;
 	DBG( "pcm_output_handle after audio_output_setup = %d\n", (int) pcm_output_handle);
 	DBG( "blksize = %d, exact_bufsize = %d\n", blksize, (int) exact_bufsize);
-	blksize = exact_bufsize;
 
     // Record that input ALSA device was opened in initialization bitmask
     initMask |= OUTPUT_ALSA_INITIALIZED;
 
     // Create output buffer to write from into ALSA output device
     if( ( outputBuffer = malloc( blksize ) ) == NULL )
+    {
+        ERR( "Failed to allocate memory for output block (%d)\n", blksize );
+        status = AUDIO_THREAD_FAILURE;
+        goto  cleanup ;
+    }
+	// Create 5 seconds of output buffer to circularly update
+    if( ( outputBuffer2 = malloc( 500*blksize ) ) == NULL )
+    {
+        ERR( "Failed to allocate memory for output block (%d)\n", blksize );
+        status = AUDIO_THREAD_FAILURE;
+        goto  cleanup ;
+    }
+	// This adds the two audio files together for play when enter is pressed
+    if( ( playingBuffer = malloc( 500*blksize ) ) == NULL )
     {
         ERR( "Failed to allocate memory for output block (%d)\n", blksize );
         status = AUDIO_THREAD_FAILURE;
@@ -166,9 +159,11 @@ void *audio_thread_fxn( void *envByRef )
     int i;
 
     memset(outputBuffer, 0, blksize);		// Clear the buffer
+    memset(outputBuffer2, 0, blksize);		// Clear the buffer
+    memset(playingBuffer, 0, blksize);		// Clear the buffer
     for(i=0; i<4; i++) {
 	snd_pcm_readi(pcm_capture_handle, outputBuffer, blksize/BYTESPERFRAME);
-	while ((snd_pcm_writei(pcm_output_handle, outputBuffer,
+	if ((snd_pcm_writei(pcm_output_handle, outputBuffer,
 		exact_bufsize)) < 0) {
 	    snd_pcm_prepare(pcm_output_handle);
 	    ERR( "<<<Pre Buffer Underrun >>> \n");
@@ -181,7 +176,10 @@ void *audio_thread_fxn( void *envByRef )
 //
     DBG( "Entering audio_thread_fxn processing loop\n" );
 
-    int count = 0;
+    int count = 0;			//count for the specific audio frame being played
+	int count2 = 0;			//count to 500 to keep track of circular loop
+	int flag = 0;			//goes high to indicate that 500 frames are captured and ready to be played back
+	int playaudiocheck = 1; //goes high to indicate that 500 frames have been played and are ready for capture and play again
     while( !envPtr->quit )
     {
 
@@ -190,24 +188,56 @@ void *audio_thread_fxn( void *envByRef )
         if( snd_pcm_readi(pcm_capture_handle, outputBuffer, blksize/BYTESPERFRAME) < 0 )
         {
 	    snd_pcm_prepare(pcm_capture_handle);
-	    ERR( "<<<<<<<<<<<<<<< Buffer Overrun >>>>>>>>>>>>>>>\n");
-            ERR( "Error reading the data from file descriptor %d\n", (int) pcm_capture_handle );
-            status = AUDIO_THREAD_FAILURE;
-            goto  cleanup ;
         }
 
         // Write output buffer into ALSA output device
-        if (snd_pcm_writei(pcm_output_handle, outputBuffer, blksize/BYTESPERFRAME) < 0) {
-            snd_pcm_prepare(pcm_output_handle);
-	    //ERR( "%d, ", count );
-            ERR( "<<<<<<<<<<<<<<< Buffer Underrun >>>>>>>>>>>>>>>\n");
-            status = AUDIO_THREAD_FAILURE;
-	    goto cleanup;
-	    // Send out an extra blank buffer if there is an underrun and try again.
+		if(!audiocaller || !flag){
+			//If not playing last five seconds of audio or the buffer isn't filled to the 5 second capacity, then we want to continue to play audio regularly
+        	if (snd_pcm_writei(pcm_output_handle, outputBuffer, blksize/BYTESPERFRAME) < 0) {
+            	snd_pcm_prepare(pcm_output_handle);
+	    		// Send out an extra blank buffer if there is an underrun and try again.
 	    memset(outputBuffer, 0, blksize);		// Clear the buffer
 	    snd_pcm_writei(pcm_output_handle, outputBuffer, exact_bufsize);
-      }
-	DBG("%d, ", count++);
+      		}
+		}
+
+		//Now we want to check to see if the buffer is full and the audio needs to be played back as well as if the audio has finished playing back
+		if(audiocaller && (count2 == 499) && playaudiocheck){
+		// This will determine that we are playing audio from this point as well we will say not to come back into this loop until the audio has been played and set count2 back to 0 for playing from the beginning
+			count2 = 0;
+			flag = 1;
+			playaudiocheck = 0;
+		}
+
+		//Now we will play audio only if the flag says that we have a full buffer
+		if(audiocaller && flag){
+		//We have to add the signals from what sound is currently happening to the sounds that happened over the last 5 seconds together and then have them playback byter for byte
+		for(i=0; i < blksize; i++){
+			playingBuffer[i] = outputBuffer2[(count2*blksize)+i] + outputBuffer[i];
+		}
+		
+		//When the audio has been formed it them plays back through the speakers with a snd_pcm_writei call for playingBuffer
+		if (snd_pcm_writei(pcm_output_handle, playingBuffer, blksize/BYTESPERFRAME) < 0){ 
+		   	snd_pcm_prepare(pcm_output_handle);
+		    // Send out an extra blank buffer if there is an underrun and try again.
+	        memset(playingBuffer, 0, blksize);		// Clear the buffer
+	        snd_pcm_writei(pcm_output_handle, playingBuffer, blksize/BYTESPERFRAME);
+        }
+		//We now need to detect whether or not the buffer has come to an end and if it has we need to let the program know that we don't want to continue playing both audios together as well as let the buffer know it can be recalled to play again
+		if(count2 > 498){
+			audiocaller = 0;
+			playaudiocheck = 1;
+			flag = 0;
+		}
+
+}
+	//Copies the recorded audio into the new buffer at the specified index
+	memcpy(outputBuffer2 + (count2*blksize), outputBuffer, blksize);
+	count++;
+	count2++;
+	count2 = count2 % 500;
+
+	//DBG("%d, ", count++);
     }
     DBG("\n");
 
@@ -221,17 +251,6 @@ cleanup:
 
     DBG( "Starting audio thread cleanup to return resources to system\n" );
 
-    // Close the audio drivers
-    // ***********************
-    //  - Uses the initMask to only free resources that were allocated.
-    //  - Nothing to be done for mixer device, as it was closed after init.
-
-    /*// Close input file
-    if( initMask & INPUT_FILE_OPENED )
-    {
-        DBG( "Closing FILE ptr %p\n", inputFile );
-        fclose( inputFile );
-    }*/
 
     // Close output ALSA device
     if( initMask & OUTPUT_ALSA_INITIALIZED )
@@ -248,6 +267,8 @@ cleanup:
     if( initMask & OUTPUT_BUFFER_ALLOCATED )
     {
         free( outputBuffer );
+		free( outputBuffer2 );
+		free( playingBuffer );
         DBG( "Freed audio output buffer at location %p\n", outputBuffer );
     }
 

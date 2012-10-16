@@ -6,6 +6,11 @@
 #define     VIDEO_THREAD_SUCCESS     ( void * ) 0
 #define     VIDEO_THREAD_FAILURE     ( void * ) - 1
 
+// Global Variable that tells video to play.
+extern int videocaller;
+
+
+
 // Thread environment definition (i.e. what it needs to operate)
 typedef  struct  video_thread_env
 {

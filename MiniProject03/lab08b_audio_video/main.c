@@ -21,6 +21,11 @@
 #include     "video_thread.h"
 #include     "audio_thread.h"
 
+//Global variables
+int audiocaller = 0;
+int videocaller = 0;
+int keepgoing = 1;
+
 /* Global thread environments */
 video_thread_env video_env = {0};
 audio_thread_env audio_env = {0};
@@ -28,10 +33,11 @@ audio_thread_env audio_env = {0};
 /* Store previous signal handler and call it */
 void (*pSigPrev)(int sig);
 
+
 /* Callback called when SIGINT is sent to the process (Ctrl-C) */
 void signal_handler(int sig) {
     DBG( "Ctrl-C pressed, cleaning up and exiting..\n" );
-
+	keepgoing = 0;
     video_env.quit = 1;
 #ifdef _DEBUG_
 	sleep(1);
@@ -41,6 +47,7 @@ void signal_handler(int sig) {
     if( pSigPrev != NULL )
         (*pSigPrev)( sig );
 }
+
 
 //*****************************************************************************
 //*  main
@@ -59,12 +66,13 @@ int main(int argc, char *argv[])
     void *audioThreadReturn, *videoThreadReturn;
     pthread_attr_t audioThreadAttrs;
     struct sched_param audioThreadParams;
+	char close = 1;
 
     /* Set the signal callback for Ctrl-C */
     pSigPrev = signal( SIGINT, signal_handler );
 
     /* Make video frame buffer visible */
-    system("cd ..; ./vid1Show");
+    system("cd ..; ./vid2Show");
 
     /* Create a thread for video */
     DBG( "Creating video thread\n" );
@@ -97,6 +105,13 @@ if(pthread_create(&audioThread, &audioThreadAttrs, audio_thread_fxn, (void *) &a
 }
 
     initMask |= AUDIOTHREADCREATED;
+while(keepgoing){
+	if(getchar()){
+		audiocaller = 1;
+		videocaller = 1;
+	}
+
+}
 
 cleanup:
     /* Make video frame buffer invisible */

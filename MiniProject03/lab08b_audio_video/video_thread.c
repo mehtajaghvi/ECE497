@@ -115,11 +115,10 @@ void *video_thread_fxn( void *envByRef )
     int   displayHeight;		// Height of a display frame
     int   displayBufSize = 0;		// Bytes in a display frame
     int   displayIdx = 0;		// Frame being displayed
-    int   displayIdx1 = 0;		// Frame being displayed
     int   workingIdx = 1;		// Next frame, being built
-    int   workingIdx1 = 1;		// Next frame, being built
     char * dst;				// Pointer to working frame
-
+	char * dst1;
+	FILE * fp;
 // Thread Create Phase -- secure and initialize resources
 // ******************************************************
 
@@ -197,18 +196,47 @@ void *video_thread_fxn( void *envByRef )
     if( video_output_setup( &fbFd, FBVID_VID0, displays, NUM_DISP_BUFS,
 		&displayWidth, &displayHeight, ZOOM_1X )
          == VOUT_FAILURE ) {
-        ERR( "Failed video_output_setup on %s in video_thread_function\n", FBVID_GFX );
+        ERR( "Failed video_output_setup on %s in video_thread_function\n", FBVID_VID0);
         status = VIDEO_THREAD_FAILURE;
         goto cleanup;
     }
-/*    if( video_output_setup( &fbFd1, FBVID_VID1, displays1, NUM_DISP_BUFS,
+
+	if((fp = fopen("/sys/devices/platform/omapdss/overlay1/position","w")) == NULL){
+	ERR("Failed to open position file");
+	}	
+	fprintf(fp,"0,0");
+	fclose(fp);
+
+    if( video_output_setup( &fbFd1, FBVID_VID1, displays1, NUM_DISP_BUFS,
 		&displayWidth, &displayHeight, ZOOM_1X )
          == VOUT_FAILURE ) {
-        ERR( "Failed video_output_setup on %s in video_thread_function\n", FBVID_GFX );
-        status = VIDEO_THREAD_FAILURE;
-        goto cleanup;
+        ERR( "Failed video_output_setup on %s in video_thread_function\n", FBVID_VID1);
+        status = VIDEO_THREAD_FAILURE;       
+	goto cleanup;
     }
-*/
+
+
+if((fp = fopen("/sys/devices/platform/omapdss/overlay2/output_size","w")) == NULL){
+	ERR("Failed to open output_size file");
+	}	
+
+	fprintf(fp,"640,480");
+	fclose(fp);
+
+	if((fp = fopen("/sys/devices/platform/omapdss/overlay2/position","w")) == NULL){
+	ERR("Failed to open position file");
+	}	
+
+	fprintf(fp,"640,0");
+	fclose(fp);
+
+	
+	if((fp = fopen("/sys/devices/platform/omapdss/overlay2/enabled","w")) == NULL){
+	ERR("Failed to open enable file");
+	}	
+	fprintf(fp,"1");
+	fclose(fp);
+	
     // Calculate size of a display buffer (in bytes)
     displayBufSize  = displayWidth * displayHeight * SCREEN_BPP;
 
@@ -222,7 +250,7 @@ void *video_thread_fxn( void *envByRef )
     // Processing loop
     DBG( "Entering video_thread_fxn processing loop.\n" );
 
-    int		frameNumber = 0;	// Count the number of frames
+//    int		frameNumber = 0;	// Count the number of frames
     while( !envPtr->quit ) {
 
         // Initialize v4l2buf buffer for DQBUF call
@@ -237,36 +265,34 @@ void *video_thread_fxn( void *envByRef )
             break;
         }
 
-	if(captureSize != captureSizeOld) {
+/*	if(captureSize != captureSizeOld) {
 	    DBG( "captureSize = %d, ", captureSize);
-	}
+	}*/
 	captureSizeOld = captureSize;
 
         // Set display index to "working" buffer in fbdev display driver
         dst = displays[ workingIdx ];
+		dst1 = displays1[ workingIdx];
         
 
-	DBG(" dst = %d, ", (int) dst);
+	//DBG(" dst = %d, ", (int) dst);
 
         // Calculate the next buffer for display/work
         displayIdx = ( displayIdx + 1 ) % NUM_DISP_BUFS;
-        displayIdx1 = ( displayIdx1 + 1 ) % NUM_DISP_BUFS;
         workingIdx = ( workingIdx + 1 ) % NUM_DISP_BUFS;
-        workingIdx1 = ( workingIdx1 + 1 ) % NUM_DISP_BUFS;
 
-	DBG( "%d: displayIdx = %d, workingIdx = %d\n", frameNumber++, 
-		displayIdx, workingIdx);
+	//DBG( "%d: displayIdx = %d, workingIdx = %d\n", frameNumber++, 
+	//	displayIdx, workingIdx);
 
 	memcpy(dst, vidBufs[ v4l2buf.index ].start, captureSize);
 
-//    dst = displays1[ workingIdx1 ];
-
-
-  //  memcpy(dst, vidBufs[ v4l2buf.index ].start, captureSize);
-
+	if(videocaller){
+		memcpy(dst1, dst, captureSize);
+		flip_display_buffers( fbFd1, displayIdx );
+		videocaller = 0;
+	}
         // Flip display and working buffers
         flip_display_buffers( fbFd, displayIdx );
-        flip_display_buffers( fbFd1, displayIdx1 );
 
         // Issue capture buffer back to capture device driver
         if( ioctl( captureFd, VIDIOC_QBUF, &v4l2buf ) == -1 ) {
@@ -306,6 +332,9 @@ cleanup:
         video_output_cleanup( fbFd, displays, NUM_DISP_BUFS );
     }
 
+    if( initMask & DISPLAYDEVICEINITIALIZED ) {
+        video_output_cleanup( fbFd1, displays1, NUM_DISP_BUFS );
+    }
     // Return from video_thread_fxn function
     // *************************************
 

@@ -6,6 +6,9 @@
 #define     AUDIO_THREAD_SUCCESS     ( ( void * ) 0 )
 #define     AUDIO_THREAD_FAILURE     ( ( void * ) - 1 )
 
+// Global Variable to tell the audio to play.
+extern int audiocaller;
+
 // Thread environment definition (i.e. what it needs to operate)
 typedef  struct  audio_thread_env
 {
