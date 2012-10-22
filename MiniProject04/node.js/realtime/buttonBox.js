@@ -113,7 +113,16 @@ io.sockets.on('connection', function (socket) {
 
    var updateInterval = 1000;
    function pushMessage() {
-        socket.emit("i2c", 6 );
+//        console.log('Got i2c request:' + 6);
+        exec('i2cget -y 3 ' + 6 + ' 0 w',
+            function (error, stdout, stderr) {
+//		The TMP102 returns a 12 bit value with the digits swapped
+                stdout = '0x' + stdout.substring(4,6) + stdout.substring(2,4);
+//                console.log('i2cget: "' + stdout + '"');
+                if(error) { console.log('error: ' + error); }
+                if(stderr) {console.log('stderr: ' + stderr); }
+                socket.emit('i2c', stdout);
+            });
         setTimeout(pushMessage, updateInterval);
     }
     pushMessage();
