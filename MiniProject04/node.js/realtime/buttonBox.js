@@ -100,7 +100,7 @@ io.sockets.on('connection', function (socket) {
                 socket.emit('i2c', stdout);
             });
         setTimeout(pushMessage, updateInterval);
-    });
+    };
 
     socket.on('led', function (ledNum) {
         var ledPath = "/sys/class/leds/beaglebone::usr" + ledNum + "/brightness";
