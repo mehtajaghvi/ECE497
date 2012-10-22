@@ -87,7 +87,7 @@ io.sockets.on('connection', function (socket) {
         });
     });
 
-   var updateInterval = 100;
+   var updateInterval = 1000;
    function pushMessage() {
 //        console.log('Got i2c request:' + i2cNum);
         exec('i2cget -y 3 ' + i2cNum + ' 0 w',
