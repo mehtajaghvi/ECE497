@@ -87,8 +87,7 @@ io.sockets.on('connection', function (socket) {
         });
     });
 
-   var updateInterval = 1000;
-   function pushMessage() {
+    socket.on('i2c', function (i2cNum) {
 //        console.log('Got i2c request:' + i2cNum);
         exec('i2cget -y 3 ' + i2cNum + ' 0 w',
             function (error, stdout, stderr) {
@@ -99,8 +98,7 @@ io.sockets.on('connection', function (socket) {
                 if(stderr) {console.log('stderr: ' + stderr); }
                 socket.emit('i2c', stdout);
             });
-        setTimeout(pushMessage, updateInterval);
-    };
+    });
 
     socket.on('led', function (ledNum) {
         var ledPath = "/sys/class/leds/beaglebone::usr" + ledNum + "/brightness";
@@ -113,7 +111,16 @@ io.sockets.on('connection', function (socket) {
         });
     });
 
+   var updateInterval = 1000;
+   function pushMessage() {
+        socket.emit('ain', ainNum() );
+        socket.emit('gpio', gpioNum() );
+        socket.emit('i2c', i2cNum() );
+        socket.emit('led', ledNum() );
+        setTimeout(pushMessage, updateInterval);
+    }
     pushMessage();
+
 
     socket.on('disconnect', function () {
         console.log("Connection " + socket.id + " terminated.");

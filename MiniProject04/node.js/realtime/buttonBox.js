@@ -113,10 +113,7 @@ io.sockets.on('connection', function (socket) {
 
    var updateInterval = 1000;
    function pushMessage() {
-        socket.emit('ain', ainNum() );
-        socket.emit('gpio', gpioNum() );
-        socket.emit('i2c', i2cNum() );
-        socket.emit('led', ledNum() );
+        socket.emit("i2c", 6 );
         setTimeout(pushMessage, updateInterval);
     }
     pushMessage();
