@@ -12,7 +12,7 @@
     <script src="jquery.flot.navigate.js"></script>
   </head>
   <body>
-    <h1>Button Box Demo <a href="http://Rose-Hulman.edu" target="_blank">
+    <h1>Gyro Demo <a href="http://Rose-Hulman.edu" target="_blank">
         <img src="RoseLogo96.png" width=200 style="float:right"></a></h1>
     <button id="connect" onClick='connect()'/>Connect</button>
     <button id="disconnect" onClick='disconnect()'>Disconnect</button>
@@ -267,13 +267,13 @@ $(function () {
         socket.emit("gpio", gpioNum);
         setTimeout(updateTop, updateTopInterval);
     }
-    updateTop();
+    //updateTop();
 
     function updateBot() {
         socket.emit("i2c",  i2cNum);
         setTimeout(updateBot, updateBotInterval);
     }
-    updateBot();
+    //updateBot();
 });
 </script>
 
