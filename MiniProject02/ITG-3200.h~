@@ -79,6 +79,15 @@ short int initialize(int i2cbus, int address){
 
 }
 
+//This function is used to initialize the gyroscope. The function returns the -errno if an error accrues.
+short int zeroGyro(int file){
+
+	GYRO_XOUT_OFFSET = readX(file);
+	GYRO_YOUT_OFFSET = readY(file);
+	GYRO_ZOUT_OFFSET = readZ(file);
+
+}
+
 //This function is used to read the WHO_AM_I_REG of the gyroscope.
 //Usage: int gyroID = readWhoAmI();
 short int readWhoAmI(int file)
@@ -222,13 +231,4 @@ short int writePwrMgm(int file, short int data)
   i2c_smbus_write_byte_data(file,PWR_MGM_REG,data);
 
   return data;
-}
-
-//This function is used to initialize the gyroscope. The function returns the -errno if an error accrues.
-short int zeroGyro(int file){
-
-	GYRO_XOUT_OFFSET = readX(file);
-	GYRO_YOUT_OFFSET = readY(file);
-	GYRO_ZOUT_OFFSET = readZ(file);
-
 }
