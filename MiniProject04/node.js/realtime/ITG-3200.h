@@ -162,11 +162,13 @@ short int readIntStatus(int file)
 
 //This function is used to read the temperature of the gyroscope.
 //Usage: int gyroTemp = readTemp();
+//Example readout: 26.59%C => 2659
 short int readTemp(int file)
 {
   short int data=0;
   data = i2c_smbus_read_byte_data(file, TEMP_OUT_H_REG)<<8;
   data |= i2c_smbus_read_byte_data(file, TEMP_OUT_L_REG);
+  data = 3500 - (-13200-data)/2.80;
 
   return data;
 }

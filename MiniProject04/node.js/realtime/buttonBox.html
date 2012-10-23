@@ -24,7 +24,7 @@
 <!--    <button id="send" onClick='send()'/>Send Message</button> -->
 <table>
 <tr>
-    <td><div id="plotTop" style="width:550px;height:150px;"></div>
+    <td><div id="plotTop" style="width:550px;height:300px;"></div>
 <center>samples</center></td>
 <td>
     Update: <input id="updateTopInterval" type="text" value="" style="text-align: right; width:3em"> ms
@@ -32,7 +32,7 @@
 </td>
 </tr>
 <tr>
-    <td><div id="plotBot" style="width:550px;height:150px;"></div>
+    <td><div id="plotBot" style="width:550px;height:300px;"></div>
 <center>samples</center></td>
 <td>
     Update: <input id="updateBotInterval" type="text" value="" style="text-align: right; width:3em"> ms
@@ -69,13 +69,19 @@ By <i>Ruffin White</i>
         plotBot,
         ainData = [],  iain = 0, 
         gpioData = [], igpio = 0,
-        i2cData = [],  ii2c = 0,
+        i2cXData = [],  ii2cX = 0,
+        i2cYData = [],  ii2cY = 0,
+        i2cZData = [],  ii2cZ = 0,
+        i2cTData = [],  ii2cT = 0,
         gpioNum = 7,
         ainNum  = 6,
         i2cNum  = "0x48";
     ainData[samples] = 0;
     gpioData[samples] = 0;
-    i2cData[samples] = 0;
+    i2cXData[samples] = 0;
+    i2cYData[samples] = 0;
+    i2cZData[samples] = 0;
+    i2cTData[samples] = 0;
 
     function connect() {
       if(firstconnect) {
@@ -140,20 +146,44 @@ By <i>Ruffin White</i>
         plotTop.setData([ ainData, gpioData ]);
         plotTop.draw();
     }
+//gyroX: -00026 gyroY: -00012 gyroZ: 000073 gyroTemp: 002602
 
     function i2c(data) {
-//        status_update("i2c: " + data);
-        // Convert to F
-        data = parseInt(data) / 16 / 16 * 9/5 +32;
-//        status_update("i2c: " + data);
-        i2cData[ii2c] = [ii2c, data];
-        ii2c++;
-        if(ii2c >= samples) {
-            ii2c = 0;
-            i2cData = [];
+        Xdata = parseInt(data.substring(6,12));
+        Ydata = parseInt(data.substring(20,26));
+        Zdata = parseInt(data.substring(34,40));
+        Tdata = parseInt(data.substring(51,56));
+        i2cXData[ii2cX] = [ii2cX, Xdata];
+        i2cYData[ii2cY] = [ii2cY, Ydata];
+        i2cZData[ii2cZ] = [ii2cZ, Zdata];
+        i2cTData[ii2cT] = [ii2cT, Tdata];
+        ii2cX++;
+        if(ii2cX >= samples) {
+            ii2cX = 0;
+            i2cXData = [];
         }
-        plotBot.setData([ i2cData ]);
+        i2cXData[ii2cY] = [ii2cY, Xdata];
+        ii2cY++;
+        if(ii2cY >= samples) {
+            ii2cY = 0;
+            i2cYData = [];
+        }
+        i2cXData[ii2cZ] = [ii2cZ, Xdata];
+        ii2cZ++;
+        if(ii2cZ >= samples) {
+            ii2cZ = 0;
+            i2cZData = [];
+        }
+        i2cXData[ii2cT] = [ii2cT, Xdata];
+        ii2cT++;
+        if(ii2cT >= samples) {
+            ii2cT = 0;
+            i2cTData = [];
+        }
+        plotBot.setData([ i2cXData, i2cYData, i2cZData]);
         plotBot.draw();
+        plotTop.setData([ i2cTData ]);
+        plotTop.draw();
     }
 
     function status_update(txt){
@@ -222,7 +252,7 @@ $(function () {
             points: { show: false},
             lines:  { show: true, lineWidth: 5},
         }, 
-        yaxis:	{ min: 0, max: 2, 
+        yaxis:	{ min: 10, max: 35, 
                   zoomRange: [10, 256], panRange: [-128, 128] },
         xaxis:	{ show: true, 
                   zoomRange: [10, 100], panRange: [0, 100] },
@@ -233,9 +263,7 @@ $(function () {
     plotTop = $.plot($("#plotTop"), 
         [ 
           { data:  initPlotData(), 
-            label: "Analog In" },
-          { data:  initPlotData(),
-            label: "gpio in" }
+            label: "GyroTemp" }
         ],
             optionsTop);
 
@@ -244,9 +272,9 @@ $(function () {
             shadowSize: 0, // drawing is faster without shadows
             points: { show: false},
             lines:  { show: true, lineWidth: 5},
-            color: 2
+            //color: 2
         }, 
-        yaxis:	{ min: 70, max: 90, 
+        yaxis:	{ min: -100, max: 100, 
                   zoomRange: [10, 256], panRange: [60, 100] },
         xaxis:	{ show: true, 
                   zoomRange: [10, 100], panRange: [0, 100] },
@@ -257,7 +285,11 @@ $(function () {
     plotBot = $.plot($("#plotBot"), 
         [ 
           { data:  initPlotData(),
-            label: "i2c"}
+            label: "GyroX"},
+          { data:  initPlotData(),
+            label: "GyroY"},
+          { data:  initPlotData(),
+            label: "GyroZ"}
         ],
             optionsBot);
 

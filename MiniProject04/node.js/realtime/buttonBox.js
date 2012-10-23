@@ -111,14 +111,13 @@ io.sockets.on('connection', function (socket) {
         });
     });
 
-   var updateInterval = 1000;
+   var updateInterval = 100;
    function pushMessage() {
 //        console.log('Got i2c request:' + 6);
-        exec('i2cget -y 3 ' + 6 + ' 0 w',
+        exec('/home/root/ECE497/MiniProject04/node.js/realtime/./a.out 0 0 ' + 3,
             function (error, stdout, stderr) {
-//		The TMP102 returns a 12 bit value with the digits swapped
-                stdout = '0x' + stdout.substring(4,6) + stdout.substring(2,4);
-//                console.log('i2cget: "' + stdout + '"');
+		console.log('stdout:' + stdout);
+		//console.log('stdout:' + parseFloat(stdout.substring(51,58))/100.0);
                 if(error) { console.log('error: ' + error); }
                 if(stderr) {console.log('stderr: ' + stderr); }
                 socket.emit('i2c', stdout);

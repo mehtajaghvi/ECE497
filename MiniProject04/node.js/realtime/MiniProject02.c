@@ -47,10 +47,10 @@ int main(int argc, char** argv){
 	gyroZ = readZ(file);
 	gyroTemp = readTemp(file);
 
-	printf("gyroX: %6d\n", gyroX);
-	printf("gyroY: %6d\n", gyroY);
-	printf("gyroZ: %6d\n", gyroZ);
-	printf("gyroTemp: %6d\n", gyroTemp);
+	printf("gyroX: %06d\n", gyroX);
+	printf("gyroY: %06d\n", gyroY);
+	printf("gyroZ: %06d\n", gyroZ);
+	printf("gyroTemp: %06d\n", gyroTemp);
 
 	close(file);
 	fflush(stdout);
